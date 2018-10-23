@@ -23,7 +23,7 @@ frame * readFrame(char const* frameName){
     
     frame *tmp = malloc(sizeof(frame));
     if(tmp == NULL){
-        fprintf(stderr, "ERROR: Couldnt allocate memory for new frame\n");
+        fprintf(stderr, "ERROR: Couldn't allocate memory for new frame\n");
         fclose(inp);
         exit(1);
     };
@@ -38,7 +38,7 @@ frame * readFrame(char const* frameName){
                     
                     
     for(int i = 0; i < N_BODYS; i++){
-        if(fscanf(inp, "%lf %lf %lf %lf %lf %lf %lf\n",&tmp->masses[i], &tmp->x[i], &tmp->y[i], &tmp->z[i], &tmp->vx[i], &tmp->vy[i], &tmp->vz[i]) != 7) {
+        if(fscanf(inp, "%le %lf %lf %lf %lf %lf %lf\n", &tmp->masses[i], &tmp->x[i], &tmp->y[i], &tmp->z[i], &tmp->vx[i], &tmp->vy[i], &tmp->vz[i]) != 7) {
             fprintf(stderr, "ERROR: Can't read file %s\n", frameName);
             free(tmp->masses);
             free(tmp->x);
@@ -58,14 +58,14 @@ frame * readFrame(char const* frameName){
 
 void printFrame(frame const* fr){
     for(int i = 0; i < N_BODYS; i++){
-        fprintf(stdout, "%f %f %f %f %f %f\n", fr->x[i], fr->y[i], fr->z[i], fr->vx[i], fr->vy[i], fr->vz[i]);
+        fprintf(stdout, "%e %f %f %f %f %f %f\n", fr->masses[i], fr->x[i], fr->y[i], fr->z[i], fr->vx[i], fr->vy[i], fr->vz[i]);
     };
 };
 
 void printSquareMatrix(const double ** matrix){
     for(int i = 0; i < N_BODYS; i++){
         for(int j = 0; j < N_BODYS; j++){
-            fprintf(stdout, "%15.2f", matrix[i][j]);
+            fprintf(stdout, "%15.2e", matrix[i][j]);
         };
         fprintf(stdout, "\n");
     };
@@ -78,7 +78,7 @@ void writeFrameFull(char const* frameName,const frame* fr ){
         exit(1);
     };
     for(int i = 0; i < N_BODYS; i++){
-        fprintf(out, "%f %f %f %f %f %f %f\n", fr->masses[i], fr->x[i], fr->y[i], fr->z[i], fr->vx[i], fr->vy[i], fr->vz[i]);
+        fprintf(out, "%le %f %f %f %f %f %f\n", fr->masses[i], fr->x[i], fr->y[i], fr->z[i], fr->vx[i], fr->vy[i], fr->vz[i]);
     };
     fclose(out);
 };

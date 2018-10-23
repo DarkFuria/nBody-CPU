@@ -111,29 +111,17 @@ void calculateDistArray(double * X, double * Y, double * Z, vec3d * distances){
     for(int i = 0; i < N_BODYS; i++){
         for(int j = 0; j < N_BODYS; j++){
 			double dx, dy, dz;
-            if(fabs(X[j] - X[i]) > EPSILON){
-                dx = X[j] - X[i];
-            } else {
-                dx = EPSILON;
-            };
-            
-            if(fabs(Y[j] - Y[i]) > EPSILON){
-                dy = Y[j] - Y[i];
-            } else {
-                dy = EPSILON;
-            };
-            
-            if(fabs(Z[j] - Z[i]) > EPSILON){
-                dz = Z[j] - Z[i];
-            } else {
-                dz = EPSILON;
-            };
+            dx = X[j] - X[i];
+            dy = Y[j] - Y[i];
+			dz = Z[j] - Z[i];
             
             distances->x[i][j] = dx;
             distances->y[i][j] = dy;
             distances->z[i][j] = dz;
             
-            distances->len[i][j] = sqrt(dx*dx + dy*dy + dz*dz);
+            double r = sqrt(dx * dx + dy * dy + dz * dx);
+            
+            distances->len[i][j] = (r < EPSILON) ? EPSILON : r;
         };
     };
 };
@@ -176,37 +164,73 @@ double* calculateAlteration(double* mass, double * force){
     return alter;
 };
 
-void integrate(double * x, double * dx){
+void integrate(double * x, double * dx, double dt){
     for(int i = 0; i < N_BODYS; i++){
-        x[i] += DELTA_T * dx[i];
+        x[i] += dt * dx[i];
     };
 };
 
-void updateFrame(frame * fr, const double** masses, tmpData* tmp){
+void initLeapfrog(frame * fr, tmpData *tmp, const double** masses, double dt){
 	calculateDistArray(fr->x, fr->y, fr->z, tmp->distances);
 	calculateInteractions(masses, tmp->distances, tmp->interactions);
 	
 	// update x position
 	double* totalForceX = calculateTotalForce(tmp->interactions->x);
 	double* altX = calculateAlteration(fr->masses, totalForceX);
-	integrate(fr->vx, altX);
-	integrate(fr->x, fr->vx);
+	integrate(fr->vx, altX, dt / 2);
 	free(totalForceX);
 	free(altX);
 	
 	// update y position
 	double* totalForceY = calculateTotalForce(tmp->interactions->y);
 	double* altY = calculateAlteration(fr->masses, totalForceY);
-	integrate(fr->vy, altY);
-	integrate(fr->y, fr->vy);
+	integrate(fr->vy, altY, dt / 2);
 	free(totalForceY);
 	free(altY);
 	
 	// update z position
 	double* totalForceZ = calculateTotalForce(tmp->interactions->z);
 	double* altZ = calculateAlteration(fr->masses, totalForceZ);
-	integrate(fr->vz, altZ);
-	integrate(fr->z, fr->vz);
+	integrate(fr->vz, altZ, dt / 2);
+	free(totalForceZ);
+	free(altZ);
+};
+
+void reverseLeapfrog(frame * fr, tmpData *tmp, const double** masses, double dt){
+	initLeapfrog(fr, tmp, masses, -dt);
+};
+
+void updateFrame(frame * fr, const double** masses, tmpData* tmp, double dt){
+	calculateDistArray(fr->x, fr->y, fr->z, tmp->distances);
+	calculateInteractions(masses, tmp->distances, tmp->interactions);
+	
+	// update x position
+	double* totalForceX = calculateTotalForce(tmp->interactions->x);
+	double* altX = calculateAlteration(fr->masses, totalForceX);
+	
+	integrate(fr->vx, altX, DELTA_T);
+	integrate(fr->x, fr->vx, DELTA_T);
+	
+	free(totalForceX);
+	free(altX);
+	
+	// update y position
+	double* totalForceY = calculateTotalForce(tmp->interactions->y);
+	double* altY = calculateAlteration(fr->masses, totalForceY);
+
+	integrate(fr->vy, altY, DELTA_T);
+	integrate(fr->y, fr->vy, DELTA_T);
+
+	free(totalForceY);
+	free(altY);
+	
+	// update z position
+	double* totalForceZ = calculateTotalForce(tmp->interactions->z);
+	double* altZ = calculateAlteration(fr->masses, totalForceZ);
+
+	integrate(fr->vz, altZ, DELTA_T);
+	integrate(fr->z, fr->vz, DELTA_T);
+
 	free(totalForceZ);
 	free(altZ);
 };

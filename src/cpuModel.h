@@ -23,6 +23,12 @@ void freeTmpData(tmpData * tmp);
 // if i == j, matrix[i][j] == 0 
 double** prepareGravitationalParameters(double * mass);
 
+// creates v(1/2) from v(0)
+void initLeapfrog(frame * fr, tmpData *tmp, const double** masses, double dt);
+
+// reverces leeapfrog for 1/2 step to save correct values
+void reverseLeapfrog(frame * fr, tmpData *tmp, const double** masses, double dt);
+
 // calculates distance between elements in projection onto X, Y or Z axis
 void calculateDistArray(double * X, double * Y, double * Z, vec3d * distances);
 
@@ -38,13 +44,10 @@ double* calculateTotalForce(double ** F);
 double* calculateAlteration(double* mass, double * force);
 
 // Integrates x using numerical methods
-void integrate(double * x, double * dx);
-
-// recalclulates coordinates
-void updateCoordinates(double * coord, double * speed, const double ** gravitationalParameters, double * masses);
+void integrate(double * x, double * dx, double dt);
 
 // updates frame
-void updateFrame(frame * fr, const double** masses, tmpData * tmp);
+void updateFrame(frame * fr, const double** masses, tmpData * tmp, double  dt);
 
 // frees created matrix
 void freeSquareMatrix(double ** matrix);

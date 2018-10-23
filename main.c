@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "src/helpers.h"
 #include "src/cpuModel.h"
@@ -15,6 +16,7 @@ int main(int argc, char* argv[]){
     frame* test = readFrame(argv[1]);
     int pathLen = sizeof("out/out000000000.csv");
     char path[pathLen];
+    printFrame(test);
    
     double ** m = prepareGravitationalParameters(test->masses);
     
@@ -23,18 +25,24 @@ int main(int argc, char* argv[]){
         fprintf(stderr, "ERROR: Too small frames amount\n");
         exit(2);
     };
+    fprintf(stdout, "%d frames will be generated used\n", FRAMES_AMOUNT);
     int WRITE_STEP = atoi(argv[3]);
     if(WRITE_STEP < 1){
         fprintf(stderr, "ERROR: Too small writing step\n");
         exit(1);
     };
-    
+    fprintf(stdout, "Write step %d will be used\n", WRITE_STEP);
+    fprintf(stdout, "Integration step %f will be used\n", DELTA_T);
+    fprintf(stdout, "%d integration steps per virtual second will be used\n", (int)(1 / DELTA_T));
+    sleep(3);
     tmpData* tmp = initTmpData();
    
     
     for(int i = 0; i < FRAMES_AMOUNT; i++){
         for(int j = 0; j < WRITE_STEP; j++){
-            updateFrame(test, (const double **)m, tmp);
+			for(long int k = 0; k < 1000000; k++){
+				updateFrame(test, (const double **)m, tmp, DELTA_T);
+			};
         };
         if(snprintf(path, sizeof(path), "out/out%09d.csv", i) != pathLen - 1){
             fprintf(stderr, "ERROR: Can't generate filename\n");
@@ -43,8 +51,14 @@ int main(int argc, char* argv[]){
         };
         path[pathLen - 1] = '\0';
         writeFrameShort(path, test);
-        fprintf(stdout, "Frame#%06d created\n", i);
+        if(i % (FRAMES_AMOUNT / 100) == 0){
+			fprintf(stdout, "%d %% of frames generated\n", i / (FRAMES_AMOUNT / 100));
+		};
     };
+    
+    fprintf(stdout, "DONE\n");
+    
+    printFrame(test);
     
     writeFrameFull("result.csv", test);
 	freeTmpData(tmp);
