@@ -1,7 +1,6 @@
 // model parameters
-#define N_BODYS 128
-#define DELTA_T 60 // seconds
+#define DELTA_T 86400 // seconds
 
 // CONSTANTS
 #define G 6.67e-11
-#define EPSILON 1 // helps to avoid singularity
+#define EPSILON 1e6 //meters, helps to avoid singularity

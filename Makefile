@@ -1,6 +1,6 @@
-CC=gcc
+CC=gcc-6
 SRC=main.c src/helpers.o src/cpuModel.o
-FLAGS=-lm -Ofast
+FLAGS=-lm -O0 -Wall -std=c11
 
 all: src/helpers.o src/cpuModel.o
 	$(CC) $(SRC) -o nbody -g $(FLAGS)

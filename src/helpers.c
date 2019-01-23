@@ -4,8 +4,22 @@
 #include <stdio.h>
 #include "settings.h"
 
+void printHelp(){
+    printf("This is GPU version of program for N-body simulation\n");
+    printf("Supported arguments :\n");
+    printf("\t-s sets the ID of first frame[optional]\n");
+    printf("\t-N sets bodys amount\n");
+    printf("\t-f sets frames amount\n");
+    printf("\t-w sets write step(frequency of file generation)\n");
+    printf("\t-t sets threads amount\n");
+    printf("\t-B runs program in bencmarking mode(deactivates processing progress && backups)[optional]\n");
+    printf("\t-b writes backups files[optional]\n");
+    printf("\t-c sets input catalogue name\n");
+    printf("\t-? or -h prints this help\n");
+};
+
 void * protectedMallocF(char const* arrName, unsigned int size){
-    double * tmp = malloc(size);
+    vec3d * tmp = malloc(size);
     if(tmp == NULL){
         fprintf(stderr, "ERROR: Couldnt allocate memory for %s\n", arrName);
         exit(1);
@@ -13,7 +27,7 @@ void * protectedMallocF(char const* arrName, unsigned int size){
     return tmp;
 };
 
-frame * readFrame(char const* frameName){
+frame * readFrame(char const* frameName, int N_BODYS){
     FILE *inp;
     inp = fopen(frameName, "r");
     if(inp == NULL){
@@ -28,25 +42,17 @@ frame * readFrame(char const* frameName){
         exit(1);
     };
     
-    tmp->masses = protectedMallocF("tmp->masses", sizeof(double) * N_BODYS);
-    tmp->x = protectedMallocF("tmp->x", sizeof(double) * N_BODYS);
-    tmp->y = protectedMallocF("tmp->y", sizeof(double) * N_BODYS);
-    tmp->z = protectedMallocF("tmp->z", sizeof(double) * N_BODYS);
-    tmp->vx = protectedMallocF("tmp->vx", sizeof(double) * N_BODYS);
-    tmp->vy = protectedMallocF("tmp->vy", sizeof(double) * N_BODYS);
-    tmp->vz = protectedMallocF("tmp->vz", sizeof(double) * N_BODYS);
+    tmp->coords = protectedMallocF("tmp->coords", sizeof(vec3d) * N_BODYS);
+    tmp->vels = protectedMallocF("tmp->vels", sizeof(vec3d) * N_BODYS);
+    tmp->accels = protectedMallocF("tmp->accels", sizeof(vec3d) * N_BODYS);
                     
                     
     for(int i = 0; i < N_BODYS; i++){
-        if(fscanf(inp, "%le %lf %lf %lf %lf %lf %lf\n", &tmp->masses[i], &tmp->x[i], &tmp->y[i], &tmp->z[i], &tmp->vx[i], &tmp->vy[i], &tmp->vz[i]) != 7) {
+        if(fscanf(inp, "%e %E %E %E %E %E %E\n", &tmp->coords[i].len, &tmp->coords[i].x, &tmp->coords[i].y, &tmp->coords[i].z, &tmp->vels[i].x, &tmp->vels[i].y, &tmp->vels[i].z) != 7) {
             fprintf(stderr, "ERROR: Can't read file %s\n", frameName);
-            free(tmp->masses);
-            free(tmp->x);
-            free(tmp->y);
-            free(tmp->z);
-            free(tmp->vx);
-            free(tmp->vy);
-            free(tmp->vz);
+            free(tmp->coords);
+            free(tmp->vels);
+            free(tmp->accels);
             fclose(inp);
             exit(1);
         };
@@ -56,51 +62,40 @@ frame * readFrame(char const* frameName){
     return tmp;
 };
 
-void printFrame(frame const* fr){
+void printFrame(frame const* fr, int N_BODYS){
     for(int i = 0; i < N_BODYS; i++){
-        fprintf(stdout, "%e %f %f %f %f %f %f\n", fr->masses[i], fr->x[i], fr->y[i], fr->z[i], fr->vx[i], fr->vy[i], fr->vz[i]);
+        fprintf(stdout, "%e %E %E %E %E %E %E\n", fr->coords[i].len, fr->coords[i].x, fr->coords[i].y, fr->coords[i].z, fr->vels[i].x, fr->vels[i].y, fr->vels[i].z);
     };
 };
 
-void printSquareMatrix(const double ** matrix){
-    for(int i = 0; i < N_BODYS; i++){
-        for(int j = 0; j < N_BODYS; j++){
-            fprintf(stdout, "%15.2e", matrix[i][j]);
-        };
-        fprintf(stdout, "\n");
-    };
-};
 
-void writeFrameFull(char const* frameName,const frame* fr ){
+
+void writeFrameFull(char const* frameName,const frame* fr, int N_BODYS){
     FILE * out = fopen(frameName, "w");
     if(out == NULL){
         fprintf(stderr, "ERROR: Can't open file %s\n", frameName);
         exit(1);
     };
     for(int i = 0; i < N_BODYS; i++){
-        fprintf(out, "%le %f %f %f %f %f %f\n", fr->masses[i], fr->x[i], fr->y[i], fr->z[i], fr->vx[i], fr->vy[i], fr->vz[i]);
+        fprintf(out, "%le %E %E %E %E %E %E\n", fr->coords[i].len, fr->coords[i].x, fr->coords[i].y, fr->coords[i].z, fr->vels[i].x, fr->vels[i].y, fr->vels[i].z);
     };
     fclose(out);
 };
 
-void writeFrameShort(char const* frameName,const frame* fr ){
+void writeFrameShort(char const* frameName,const frame* fr, int N_BODYS){
     FILE * out = fopen(frameName, "w");
     if(out == NULL){
         fprintf(stderr, "ERROR: Can't open file %s\n", frameName);
         exit(1);
     };
     for(int i = 0; i < N_BODYS; i++){
-        fprintf(out, "%f %f %f\n", fr->x[i], fr->y[i], fr->z[i]);
+        fprintf(out, "%E %E %E\n", fr->coords[i].x, fr->coords[i].y, fr->coords[i].z);
     };
     fclose(out);
 };
 
 void freeFrame(frame* fr){
-    free(fr->masses);
-    free(fr->x);
-    free(fr->y);
-    free(fr->z);
-    free(fr->vx);
-    free(fr->vy);
-    free(fr->vz);
+    free(fr->coords);
+    free(fr->vels);
+    free(fr->accels);
 };

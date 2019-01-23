@@ -1,0 +1,7 @@
+*.[oa]
+*.csv
+out/*
+moon.*
+nbody
+src/*.[o]
+catalogue*
