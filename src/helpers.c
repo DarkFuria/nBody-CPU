@@ -5,13 +5,12 @@
 #include "settings.h"
 
 void printHelp(){
-    printf("This is GPU version of program for N-body simulation\n");
+    printf("This is CPU version of program for N-body simulation\n");
     printf("Supported arguments :\n");
     printf("\t-s sets the ID of first frame[optional]\n");
     printf("\t-N sets bodys amount\n");
     printf("\t-f sets frames amount\n");
     printf("\t-w sets write step(frequency of file generation)\n");
-    printf("\t-t sets threads amount\n");
     printf("\t-B runs program in bencmarking mode(deactivates processing progress && backups)[optional]\n");
     printf("\t-b writes backups files[optional]\n");
     printf("\t-c sets input catalogue name\n");
